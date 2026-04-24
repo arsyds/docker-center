@@ -35,41 +35,90 @@ services:
   redis-node-1:
     image: redis:7-alpine
     container_name: redis-node-1
-    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass redis_cluster_pass --masterauth redis_cluster_pass
+    command: >
+      sh -c "rm -f /data/nodes.conf &&
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass redis_cluster_pass
+      --masterauth redis_cluster_pass"
     ports:
       - "6379:6379"
     volumes:
       - redis_node_1:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_cluster_pass", "--no-auth-warning", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis-node-2:
     image: redis:7-alpine
     container_name: redis-node-2
-    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass redis_cluster_pass --masterauth redis_cluster_pass
+    command: >
+      sh -c "rm -f /data/nodes.conf &&
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass redis_cluster_pass
+      --masterauth redis_cluster_pass"
     ports:
       - "6380:6379"
     volumes:
       - redis_node_2:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_cluster_pass", "--no-auth-warning", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis-node-3:
     image: redis:7-alpine
     container_name: redis-node-3
-    command: redis-server --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --requirepass redis_cluster_pass --masterauth redis_cluster_pass
+    command: >
+      sh -c "rm -f /data/nodes.conf &&
+      redis-server
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass redis_cluster_pass
+      --masterauth redis_cluster_pass"
     ports:
       - "6381:6379"
     volumes:
       - redis_node_3:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_cluster_pass", "--no-auth-warning", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis-cluster-init:
     image: redis:7-alpine
     container_name: redis-cluster-init
     depends_on:
-      - redis-node-1
-      - redis-node-2
-      - redis-node-3
+      redis-node-1:
+        condition: service_healthy
+      redis-node-2:
+        condition: service_healthy
+      redis-node-3:
+        condition: service_healthy
     entrypoint:
       - sh
       - -c
-      - sleep 5 && redis-cli --cluster create redis-node-1:6379 redis-node-2:6379 redis-node-3:6379 --cluster-replicas 0 --cluster-yes -a redis_cluster_pass
+      - |
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-1 FLUSHALL &&
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-2 FLUSHALL &&
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-3 FLUSHALL &&
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-1 CLUSTER RESET HARD &&
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-2 CLUSTER RESET HARD &&
+        redis-cli -a redis_cluster_pass --no-auth-warning -h redis-node-3 CLUSTER RESET HARD &&
+        redis-cli --cluster create redis-node-1:6379 redis-node-2:6379 redis-node-3:6379 --cluster-replicas 0 --cluster-yes -a redis_cluster_pass
     restart: "no"
 
   kafka-1:
