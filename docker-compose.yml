@@ -234,12 +234,46 @@ services:
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server
-      - ../data-migrate/clickhouse:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  clickhouse-migrate:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: local-clickhouse-migrate
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./migrations/clickhouse:/migrations:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        clickhouse-client --host clickhouse \
+          --user clickhouse_user --password clickhouse_pass \
+          --query "CREATE DATABASE IF NOT EXISTS clickhouse_local"
+        for file in \
+          /migrations/001_create_transactions_table.sql \
+          /migrations/kafka_engine.sql \
+          /migrations/merchant_api_logs.sql \
+          /migrations/kafka_merchant_api_logs.sql \
+          /migrations/merchant_api_logs_mv.sql \
+          /migrations/provider_api_logs.sql \
+          /migrations/kafka_provider_api_logs.sql \
+          /migrations/provider_api_logs_mv.sql \
+          /migrations/provisioning_logs.sql \
+          /migrations/kafka_provisioning_logs.sql \
+          /migrations/provisioning_logs_mv.sql; do
+          echo "==> Applying $file"
+          clickhouse-client --host clickhouse \
+            --user clickhouse_user --password clickhouse_pass \
+            --database clickhouse_local --multiquery < "$file"
+        done
+        echo "==> All migrations applied"
+    restart: "no"
 
 volumes:
   postgres_data:
