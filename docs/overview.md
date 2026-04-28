@@ -1,5 +1,21 @@
 # SemarPay Platform — Architecture Overview
 
+## Documentation Index
+
+| Document | Audience | Purpose |
+|----------|---------|---------|
+| **[Onboarding Guide](./onboarding.md)** | All | Local setup, dev workflow, mental models |
+| **[Troubleshooting](./troubleshooting.md)** | All | Common failures and resolution steps |
+| **[Data Migrations](./data-migrate.md)** | Backend | Schema management, migration conventions |
+| [eagle-ops](./eagle-ops.md) | Backend | Back-office configuration service |
+| [payment-middleware](./payment-middleware.md) | Backend | Core payment processing engine |
+| [api-adapter](./api-adapter.md) | Backend | Nobu Bank integration layer |
+| [provider-mock](./provider-mock.md) | Backend | Dev/test mock for Nobu Bank |
+| [mobile-banking](./mobile-banking.md) | Backend | Standalone digital banking service |
+| [ClickHouse Dual-Write](../clickhouse-dual-write.md) | Tech Lead | Analytics write strategy and reconciliation |
+
+---
+
 ## Services
 
 | Service | Role | Port(s) | Protocol |
