@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS clickhouse_local.transactions
     store_id                            UUID,
     transaction_timestamp               DateTime64(3, 'UTC'),
     status_changed_timestamp            DateTime64(3, 'UTC') DEFAULT toDateTime64(0, 3, 'UTC'),
-    transaction_date                    DateTime64(3, 'UTC'),
+    transaction_date                    Date,
     transaction_type                    String,
     transaction_status                  String,
     previous_transaction_status         String  DEFAULT '',
